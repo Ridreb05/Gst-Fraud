@@ -63,7 +63,7 @@ class GSTFraudRiskEngine:
         rule_risk_score = 0
         risk_drivers = []
 
-        if invoice_spike > 5: [cite: 66]
+        if invoice_spike > 5: 
             rule_risk_score += 20
             risk_drivers.append(f"Invoice Spike ({invoice_spike:.1f}x normal)")
         
@@ -71,11 +71,11 @@ class GSTFraudRiskEngine:
             rule_risk_score += 25
             risk_drivers.append(f"ITC Deviation (+{itc_deviation:.1f}%)")
             
-        if refund_spike > 3: [cite: 68]
+        if refund_spike > 3: 
             rule_risk_score += 20
             risk_drivers.append("Abnormal Refund Request")
             
-        if z_score > 3: [cite: 69]
+        if z_score > 3: 
             rule_risk_score += 15
             risk_drivers.append("Statistical Outlier (Z-Score > 3)")
 
