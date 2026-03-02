@@ -11,7 +11,7 @@ class GSTFraudRiskEngine:
         self.load_models_and_data()
         
     def load_models_and_data(self):
-        """Loads the pre-trained Isolation Forest and historical entity profiles. [cite: 4, 6]"""
+        """Loads the pre-trained Isolation Forest and historical entity profiles. """
         try:
             self.iso_forest = joblib.load('models/isolation_forest.pkl')
             self.entity_profiles = pd.read_csv('data/entity_profiles.csv')
@@ -25,17 +25,17 @@ class GSTFraudRiskEngine:
     def process_new_invoice(self, new_invoice):
         """
         Main pipeline to process a real-time invoice.
-        new_invoice: dict containing GSTIN, Invoice_Value, ITC_Claimed, Refund_Claimed [cite: 41, 42]
+        new_invoice: dict containing GSTIN, Invoice_Value, ITC_Claimed, Refund_Claimed 
         """
         gstin = new_invoice.get("GSTIN")
         invoice_value = new_invoice.get("Invoice_Value", 0)
         itc_claimed = new_invoice.get("ITC_Claimed", 0)
         refund_claimed = new_invoice.get("Refund_Claimed", 0)
         
-        current_itc_ratio = itc_claimed / invoice_value if invoice_value > 0 else 0 [cite: 56]
+        current_itc_ratio = itc_claimed / invoice_value if invoice_value > 0 else 0 
         
         # Step 3: Wait for Incoming Invoice / Identify GSTIN [cite: 32, 36]
-        is_new_entity = gstin not in self.entity_profiles.index [cite: 37]
+        is_new_entity = gstin not in self.entity_profiles.index 
         
         if is_new_entity:
             # COLD START PROTOCOL: Handle brand new businesses
@@ -46,7 +46,7 @@ class GSTFraudRiskEngine:
                 'Total_Refund': 0
             }
         else:
-            historical_data = self.entity_profiles.loc[gstin].to_dict() [cite: 44]
+            historical_data = self.entity_profiles.loc[gstin].to_dict() 
 
         # Step 4: Preprocess & Create Comparison Features [cite: 45, 50]
         avg_inv = historical_data.get('Avg_Invoice_Value', invoice_value)
@@ -54,10 +54,10 @@ class GSTFraudRiskEngine:
         avg_itc_ratio = historical_data.get('Avg_ITC_Ratio', 0.1)
         avg_refund = historical_data.get('Total_Refund', 0)
 
-        invoice_spike = invoice_value / avg_inv if avg_inv > 0 else 1 [cite: 54]
-        z_score = (invoice_value - avg_inv) / std_inv if std_inv > 0 else 0 [cite: 55]
+        invoice_spike = invoice_value / avg_inv if avg_inv > 0 else 1 
+        z_score = (invoice_value - avg_inv) / std_inv if std_inv > 0 else 0 
         itc_deviation = (current_itc_ratio - avg_itc_ratio) * 100 # In percentage points [cite: 57]
-        refund_spike = refund_claimed / avg_refund if avg_refund > 0 else (refund_claimed > 0) [cite: 58]
+        refund_spike = refund_claimed / avg_refund if avg_refund > 0 else (refund_claimed > 0) 
 
         # Step 5: Real-Time Invoice Anomaly Check (Rule-Based) [cite: 59, 62]
         rule_risk_score = 0
@@ -102,7 +102,7 @@ class GSTFraudRiskEngine:
                 risk_drivers.append("ML Anomaly Detected")
 
         # Combine Rule-based and ML score
-        invoice_risk_score = min(100, rule_risk_score + (ml_risk_score * 0.5)) [cite: 71]
+        invoice_risk_score = min(100, rule_risk_score + (ml_risk_score * 0.5)) 
 
         # Step 7: Risk Aggregation (Simulated for real-time demo) [cite: 88, 94]
         # In a real app, you'd pull all past invoice scores for this GSTIN from a DB.
@@ -111,7 +111,7 @@ class GSTFraudRiskEngine:
         if not is_new_entity:
             # Simulated Historical Aggregation logic
             avg_risk = historical_data.get('Avg_ITC_Ratio', 0) * 100 # Rough proxy for demo
-            business_risk = (0.5 * avg_risk) + (0.3 * invoice_risk_score) + (0.2 * max(avg_risk, invoice_risk_score)) [cite: 94]
+            business_risk = (0.5 * avg_risk) + (0.3 * invoice_risk_score) + (0.2 * max(avg_risk, invoice_risk_score)) 
             business_risk = min(100, max(0, business_risk))
 
         # OVERRIDE FIX: Prevent massive fraud from being diluted by averages
@@ -121,13 +121,13 @@ class GSTFraudRiskEngine:
         # Step 8: Action Decision Engine [cite: 98]
         action = "Monitor"
         category = "Low Risk"
-        if business_risk > 80: [cite: 99]
+        if business_risk > 80: 
             action = "Audit + Refund Hold"
             category = "Critical Risk"
-        elif business_risk > 60: [cite: 99]
+        elif business_risk > 60: 
             action = "Manual Review"
             category = "High Risk"
-        elif business_risk > 30: [cite: 99]
+        elif business_risk > 30: 
             action = "Auto Notice"
             category = "Medium Risk"
 
@@ -137,8 +137,8 @@ class GSTFraudRiskEngine:
             "Invoice_Risk": round(invoice_risk_score, 2),
             "Business_Risk": round(business_risk, 2),
             "Category": category,
-            "Action_Triggered": action, [cite: 111]
-            "Top_Risk_Drivers": risk_drivers if risk_drivers else ["Normal Transaction"] [cite: 100]
+            "Action_Triggered": action, 
+            "Top_Risk_Drivers": risk_drivers if risk_drivers else ["Normal Transaction"] 
         }
         
         # Step 9: Update System State (Simulated logging) [cite: 101, 102]
@@ -147,7 +147,7 @@ class GSTFraudRiskEngine:
         return alert
 
     def _log_transaction(self, alert):
-        """Simulates logging to a database. [cite: 102]"""
+        """Simulates logging to a database. """
         print(f"\n[LOG] Processed {alert['GSTIN']} | Score: {alert['Business_Risk']} | Action: {alert['Action_Triggered']}")
 
 
