@@ -5,14 +5,13 @@ import random
 import os
 import matplotlib.pyplot as plt
 
-# Ensure data directory exists
 os.makedirs('data', exist_ok=True)
 
 def generate_gst_data(num_entities=100, days=365):
     data = []
     start_date = datetime(2025, 1, 1)
     
-    # Define Entity Profiles
+    # Defining Entity Profiles
     # 80% Normal, 10% Seasonal, 10% Fraudulent
     entity_types = (
         ['normal'] * int(num_entities * 0.8) + 
@@ -32,7 +31,6 @@ def generate_gst_data(num_entities=100, days=365):
         for day in range(days):
             current_date = start_date + timedelta(days=day)
             
-            # Not every business transacts every day
             if random.random() > 0.3: 
                 continue
                 
@@ -72,7 +70,6 @@ def generate_gst_data(num_entities=100, days=365):
 
     df = pd.DataFrame(data, columns=['GSTIN', 'Date', 'Invoice_Value', 'ITC_Claimed', 'Refund_Claimed', 'Is_Fraud_Label', 'Entity_Type'])
     
-    # Save to CSV
     file_path = 'data/historical_invoices.csv'
     df.to_csv(file_path, index=False)
     print(f"✅ Generated {len(df)} invoices across {num_entities} entities.")
@@ -84,7 +81,6 @@ if __name__ == "__main__":
     print("Generating synthetic GST data...")
     df = generate_gst_data(num_entities=200, days=365)
     
-    # Quick Visualization to prove anomalies exist
     plt.figure(figsize=(10, 6))
     plt.scatter(df['Invoice_Value'], df['ITC_Claimed'], c=df['Is_Fraud_Label'], cmap='coolwarm', alpha=0.6)
     plt.xlabel('Invoice Value (₹)')
