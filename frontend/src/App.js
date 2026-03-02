@@ -29,8 +29,7 @@ function App() {
     setResult(null);
 
     try {
-      // NOTE: Update this URL to your Render URL once the backend is live!
-      // Example: 'https://gst-fraud-api.onrender.com/api/v1/evaluate-invoice'
+
       const response = await axios.post('https://gst-fraud.onrender.com/api/v1/evaluate-invoice', {
         GSTIN: invoiceData.GSTIN,
         Invoice_Value: parseFloat(invoiceData.Invoice_Value),
