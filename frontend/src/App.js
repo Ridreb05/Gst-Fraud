@@ -26,7 +26,7 @@ function App() {
 
     try {
       // Pointing to your local FastAPI server
-      const response = await axios.post('http://localhost:8000/api/v1/evaluate-invoice', {
+      const response = await axios.post('https://gst-fraud.onrender.com', {
         GSTIN: invoiceData.GSTIN,
         Invoice_Value: parseFloat(invoiceData.Invoice_Value),
         ITC_Claimed: parseFloat(invoiceData.ITC_Claimed),
