@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/Gst-Fraud/static/css/main.e6c13ad2.css",
-    "main.js": "/Gst-Fraud/static/js/main.5162c6ea.js",
+    "main.js": "/Gst-Fraud/static/js/main.1a597419.js",
     "index.html": "/Gst-Fraud/index.html",
     "main.e6c13ad2.css.map": "/Gst-Fraud/static/css/main.e6c13ad2.css.map",
-    "main.5162c6ea.js.map": "/Gst-Fraud/static/js/main.5162c6ea.js.map"
+    "main.1a597419.js.map": "/Gst-Fraud/static/js/main.1a597419.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.5162c6ea.js"
+    "static/js/main.1a597419.js"
   ]
 }
