@@ -7,7 +7,6 @@ import os
 class GSTFraudRiskEngine:
     def __init__(self):
         print("Initializing Risk Engine...")
-        # Step 1: Initialize System [cite: 2]
         self.load_models_and_data()
         
     def load_models_and_data(self):
@@ -34,13 +33,11 @@ class GSTFraudRiskEngine:
         
         current_itc_ratio = itc_claimed / invoice_value if invoice_value > 0 else 0 
         
-        # Step 3: Wait for Incoming Invoice / Identify GSTIN [cite: 32, 36]
         is_new_entity = gstin not in self.entity_profiles.index 
         
         if is_new_entity:
-            # COLD START PROTOCOL: Handle brand new businesses
             historical_data = {
-                'Avg_Invoice_Value': invoice_value, # Treat current as baseline
+                'Avg_Invoice_Value': invoice_value, 
                 'Std_Invoice_Value': 0,
                 'Avg_ITC_Ratio': current_itc_ratio,
                 'Total_Refund': 0
@@ -48,18 +45,16 @@ class GSTFraudRiskEngine:
         else:
             historical_data = self.entity_profiles.loc[gstin].to_dict() 
 
-        # Step 4: Preprocess & Create Comparison Features [cite: 45, 50]
         avg_inv = historical_data.get('Avg_Invoice_Value', invoice_value)
-        std_inv = historical_data.get('Std_Invoice_Value', 1) # Avoid div by zero
+        std_inv = historical_data.get('Std_Invoice_Value', 1) 
         avg_itc_ratio = historical_data.get('Avg_ITC_Ratio', 0.1)
         avg_refund = historical_data.get('Total_Refund', 0)
 
         invoice_spike = invoice_value / avg_inv if avg_inv > 0 else 1 
         z_score = (invoice_value - avg_inv) / std_inv if std_inv > 0 else 0 
-        itc_deviation = (current_itc_ratio - avg_itc_ratio) * 100 # In percentage points [cite: 57]
+        itc_deviation = (current_itc_ratio - avg_itc_ratio) * 100 
         refund_spike = refund_claimed / avg_refund if avg_refund > 0 else (refund_claimed > 0) 
 
-        # Step 5: Real-Time Invoice Anomaly Check (Rule-Based) [cite: 59, 62]
         rule_risk_score = 0
         risk_drivers = []
 
@@ -67,7 +62,7 @@ class GSTFraudRiskEngine:
             rule_risk_score += 20
             risk_drivers.append(f"Invoice Spike ({invoice_spike:.1f}x normal)")
         
-        if itc_deviation > 15: # e.g., claiming 30% when average is 10% [cite: 67]
+        if itc_deviation > 15:
             rule_risk_score += 25
             risk_drivers.append(f"ITC Deviation (+{itc_deviation:.1f}%)")
             
@@ -79,10 +74,8 @@ class GSTFraudRiskEngine:
             rule_risk_score += 15
             risk_drivers.append("Statistical Outlier (Z-Score > 3)")
 
-        # Step 5: ML Anomaly Detection [cite: 63]
         ml_risk_score = 0
         if self.iso_forest:
-            # Prepare feature array matching the training columns
             features = pd.DataFrame([{
                 'Invoice_Value': invoice_value,
                 'ITC_Claimed': itc_claimed,
@@ -90,35 +83,26 @@ class GSTFraudRiskEngine:
                 'Refund_Claimed': refund_claimed
             }])
             
-            # Isolation forest returns 1 (normal) or -1 (anomaly)
             prediction = self.iso_forest.predict(features)[0]
             
-            # Convert to a 0-100 score [cite: 70]
             if prediction == -1:
                 ml_risk_score = 50
                 decision_function_score = self.iso_forest.decision_function(features)[0]
-                # Lower decision score = more anomalous. Scale it.
                 ml_risk_score += min(50, abs(decision_function_score) * 100)
                 risk_drivers.append("ML Anomaly Detected")
 
-        # Combine Rule-based and ML score
         invoice_risk_score = min(100, rule_risk_score + (ml_risk_score * 0.5)) 
 
-        # Step 7: Risk Aggregation (Simulated for real-time demo) [cite: 88, 94]
-        # In a real app, you'd pull all past invoice scores for this GSTIN from a DB.
-        # Here, we blend the current invoice risk with the entity's historical footprint.
+       
         business_risk = invoice_risk_score 
         if not is_new_entity:
-            # Simulated Historical Aggregation logic
-            avg_risk = historical_data.get('Avg_ITC_Ratio', 0) * 100 # Rough proxy for demo
+            avg_risk = historical_data.get('Avg_ITC_Ratio', 0) * 100 
             business_risk = (0.5 * avg_risk) + (0.3 * invoice_risk_score) + (0.2 * max(avg_risk, invoice_risk_score)) 
             business_risk = min(100, max(0, business_risk))
 
-        # OVERRIDE FIX: Prevent massive fraud from being diluted by averages
         if invoice_risk_score > 90:
             business_risk = max(business_risk, 90)
 
-        # Step 8: Action Decision Engine [cite: 98]
         action = "Monitor"
         category = "Low Risk"
         if business_risk > 80: 
@@ -131,7 +115,6 @@ class GSTFraudRiskEngine:
             action = "Auto Notice"
             category = "Medium Risk"
 
-        # Step 10: Generate Structured Output [cite: 107, 100]
         alert = {
             "GSTIN": gstin,
             "Invoice_Risk": round(invoice_risk_score, 2),
@@ -141,7 +124,6 @@ class GSTFraudRiskEngine:
             "Top_Risk_Drivers": risk_drivers if risk_drivers else ["Normal Transaction"] 
         }
         
-        # Step 9: Update System State (Simulated logging) [cite: 101, 102]
         self._log_transaction(alert)
         
         return alert
@@ -152,23 +134,20 @@ class GSTFraudRiskEngine:
 
 
 if __name__ == "__main__":
-    # Test the Engine
     engine = GSTFraudRiskEngine()
     
-    # 1. Test a totally normal invoice
     normal_invoice = {
-        "GSTIN": "27ABCDE0001F1Z1", # Assuming this exists in your generated CSV
+        "GSTIN": "27ABCDE0001F1Z1",
         "Invoice_Value": 100000,
-        "ITC_Claimed": 12000,       # 12% is normal
+        "ITC_Claimed": 12000,       
         "Refund_Claimed": 0
     }
     
-    # 2. Test a blatant fraud invoice (Massive invoice spike + huge ITC deviation)
     fraud_invoice = {
         "GSTIN": "27ABCDE0002F1Z1", 
-        "Invoice_Value": 9000000,   # Massive spike
-        "ITC_Claimed": 8500000,     # Impossible ITC ratio
-        "Refund_Claimed": 500000    # Suspicious refund
+        "Invoice_Value": 9000000,   
+        "ITC_Claimed": 8500000,     
+        "Refund_Claimed": 500000    
     }
     
     print("\n--- Testing Normal Invoice ---")
