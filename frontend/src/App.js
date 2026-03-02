@@ -88,7 +88,7 @@ function App() {
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '0 0 0.5rem 0' }}>
             <ShieldAlert size={36} color="#2563eb" />
-            Intelligent GST Fraud Detection
+            GST SENTINEL AI :  GST Fraud Detection Tool
           </h1>
           <p style={{ color: '#64748b', margin: 0 }}>Real-time invoice anomaly detection and entity risk scoring.</p>
         </div>
