@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { AlertTriangle, CheckCircle, Search, ShieldAlert, Activity } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Search, ShieldAlert, Activity, Moon, Sun } from 'lucide-react';
 import { 
   PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Legend 
+  LineChart, Line, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 
 function App() {
@@ -17,6 +17,20 @@ function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const theme = {
+    bg: isDarkMode ? '#0f172a' : '#ffffff',
+    cardBg: isDarkMode ? '#1e293b' : '#f8fafc',
+    text: isDarkMode ? '#f8fafc' : '#1e293b',
+    subText: isDarkMode ? '#94a3b8' : '#64748b',
+    border: isDarkMode ? '#334155' : '#e2e8f0',
+    inputBg: isDarkMode ? '#0f172a' : '#ffffff',
+    inputBorder: isDarkMode ? '#475569' : '#cbd5e1',
+    shadow: isDarkMode ? '0 4px 6px -1px rgba(0,0,0,0.5)' : '0 4px 6px -1px rgba(0,0,0,0.1)',
+    chartGrid: isDarkMode ? '#334155' : '#e2e8f0',
+  };
 
   const handleInputChange = (e) => {
     setInvoiceData({ ...invoiceData, [e.target.name]: e.target.value });
@@ -29,7 +43,6 @@ function App() {
     setResult(null);
 
     try {
-
       const response = await axios.post('https://gst-fraud.onrender.com/api/v1/evaluate-invoice', {
         GSTIN: invoiceData.GSTIN,
         Invoice_Value: parseFloat(invoiceData.Invoice_Value),
@@ -43,15 +56,12 @@ function App() {
     setLoading(false);
   };
 
-  // --- UI Helpers & Chart Data Generation ---
-
   const getRiskColor = (score) => {
-    if (score > 60) return '#ef4444'; // Red (High/Critical)
-    if (score > 30) return '#eab308'; // Yellow (Medium)
-    return '#22c55e'; // Green (Low)
+    if (score > 60) return '#ef4444'; 
+    if (score > 30) return '#eab308'; 
+    return '#22c55e'; 
   };
 
-  // Generate breakdown data based on the severity of the score
   const getPieData = (score) => {
     if (score > 50) {
       return [
@@ -66,9 +76,9 @@ function App() {
       { name: 'Normal Volume', value: 85 },
     ];
   };
+  
   const PIE_COLORS = ['#f97316', '#ef4444', '#3b82f6'];
 
-  // Mock historical trend leading up to the current score
   const getTrendData = (currentScore) => {
     const baseRisk = currentScore > 60 ? 40 : 10;
     return [
@@ -82,154 +92,144 @@ function App() {
   };
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem', maxWidth: '1200px', margin: '0 auto', color: '#1e293b' }}>
+    <div style={{ backgroundColor: theme.bg, color: theme.text, minHeight: '100vh', transition: 'background-color 0.3s ease', padding: '2rem 1rem' }}>
       
-      <header style={{ marginBottom: '2rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '0 0 0.5rem 0' }}>
-            <ShieldAlert size={36} color="#2563eb" />
-            GST SENTINEL AI :  GST Fraud Detection Tool
-          </h1>
-          <p style={{ color: '#64748b', margin: 0 }}>Real-time invoice anomaly detection and entity risk scoring.</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '0.9rem', fontWeight: 'bold' }}>
-          <Activity size={18} color="#22c55e" />
-          System Active
-        </div>
-      </header>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-        
-        {/* LEFT COLUMN: INPUT FORM */}
-        <div style={{ padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: '#f8fafc', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-          <h2 style={{ marginTop: 0, borderBottom: '2px solid #e2e8f0', paddingBottom: '0.5rem' }}>Submit Invoice</h2>
+    
+      <style>
+        {`
+          .responsive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1200px; margin: 0 auto; }
+          .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; height: 250px; margin-bottom: 1.5rem; }
+          .header-flex { display: flex; justify-content: space-between; align-items: flex-end; max-width: 1200px; margin: 0 auto; }
           
-          <form onSubmit={evaluateInvoice} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginTop: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.4rem' }}>Target GSTIN</label>
-              <input 
-                type="text" name="GSTIN" value={invoiceData.GSTIN} onChange={handleInputChange} required maxLength="15"
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '1rem' }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.4rem' }}>Invoice Value (₹)</label>
-              <input 
-                type="number" name="Invoice_Value" value={invoiceData.Invoice_Value} onChange={handleInputChange} required
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '1rem' }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.4rem' }}>ITC Claimed (₹)</label>
-              <input 
-                type="number" name="ITC_Claimed" value={invoiceData.ITC_Claimed} onChange={handleInputChange} required
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '1rem' }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.4rem' }}>Refund Claimed (₹)</label>
-              <input 
-                type="number" name="Refund_Claimed" value={invoiceData.Refund_Claimed} onChange={handleInputChange}
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '1rem' }}
-              />
+          @media (max-width: 900px) {
+            .responsive-grid { grid-template-columns: 1fr; }
+            .header-flex { flex-direction: column; align-items: flex-start; gap: 1rem; }
+          }
+          
+          @media (max-width: 600px) {
+            .charts-grid { grid-template-columns: 1fr; height: auto; gap: 1.5rem; }
+            .chart-box { height: 200px; }
+          }
+
+          @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-in { animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+          
+          input:focus { outline: 2px solid #3b82f6; outline-offset: -1px; }
+          button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+          button:active:not(:disabled) { transform: translateY(0); }
+        `}
+      </style>
+
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        
+        {/* HEADER */}
+        <header className="header-flex" style={{ marginBottom: '2rem', borderBottom: `1px solid ${theme.border}`, paddingBottom: '1rem' }}>
+          <div className="animate-in" style={{ animationDelay: '0.1s' }}>
+            <h1 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '0 0 0.5rem 0' }}>
+              <ShieldAlert size={36} color="#3b82f6" />
+              GST SENTINEL AI
+            </h1>
+            <p style={{ color: theme.subText, margin: 0 }}>Real-time invoice anomaly detection and entity risk scoring.</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }} className="animate-in" style={{ animationDelay: '0.2s' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.subText, fontSize: '0.9rem', fontWeight: 'bold' }}>
+              <Activity size={18} color="#22c55e" />
+              System Active
             </div>
             <button 
-              type="submit" disabled={loading}
-              style={{ 
-                backgroundColor: '#2563eb', color: 'white', padding: '1rem', border: 'none', 
-                borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem', 
-                marginTop: '0.5rem', transition: 'background-color 0.2s' 
-              }}
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.text, padding: '0.5rem', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease' }}
             >
-              {loading ? 'Executing ML Pipeline...' : 'Run Risk Engine'}
+              {isDarkMode ? <Sun size={20} color="#eab308" /> : <Moon size={20} color="#64748b" />}
             </button>
-          </form>
-          {error && <p style={{ color: '#ef4444', marginTop: '1rem', fontWeight: '500', padding: '0.5rem', backgroundColor: '#fee2e2', borderRadius: '4px' }}>{error}</p>}
-        </div>
+          </div>
+        </header>
 
-        {/* RIGHT COLUMN: RESULTS DASHBOARD */}
-        <div style={{ padding: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-          <h2 style={{ marginTop: 0, borderBottom: '2px solid #e2e8f0', paddingBottom: '0.5rem' }}>Evaluation Output</h2>
+        {/* MAIN LAYOUT */}
+        <div className="responsive-grid">
           
-          {!result ? (
-            <div style={{ color: '#94a3b8', textAlign: 'center', marginTop: '6rem' }}>
-              <Search size={64} style={{ margin: '0 auto', opacity: 0.3 }} />
-              <p style={{ fontSize: '1.2rem', marginTop: '1rem' }}>Awaiting invoice submission...</p>
-            </div>
-          ) : (
-            <div style={{ animation: 'fadeIn 0.5s' }}>
-              
-              {/* Top Row: Score & Action */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '8px' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <h3 style={{ margin: '0 0 5px 0', color: '#64748b', fontSize: '0.9rem', textTransform: 'uppercase' }}>Business Risk Score</h3>
-                  <div style={{ fontSize: '3.5rem', fontWeight: '900', color: getRiskColor(result.Business_Risk), lineHeight: '1' }}>
-                    {result.Business_Risk}
-                    <span style={{ fontSize: '1.2rem', color: '#cbd5e1' }}>/100</span>
-                  </div>
-                  <div style={{ display: 'inline-block', padding: '0.25rem 0.75rem', borderRadius: '999px', backgroundColor: `${getRiskColor(result.Business_Risk)}20`, color: getRiskColor(result.Business_Risk), fontWeight: 'bold', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                    {result.Category.toUpperCase()}
-                  </div>
+          {/* LEFT COLUMN: INPUT FORM */}
+          <div className="animate-in" style={{ animationDelay: '0.3s', padding: '1.5rem', border: `1px solid ${theme.border}`, borderRadius: '12px', backgroundColor: theme.cardBg, boxShadow: theme.shadow, transition: 'all 0.3s ease' }}>
+            <h2 style={{ marginTop: 0, borderBottom: `2px solid ${theme.border}`, paddingBottom: '0.5rem' }}>Submit Invoice</h2>
+            
+            <form onSubmit={evaluateInvoice} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', marginTop: '1rem' }}>
+              {['GSTIN', 'Invoice_Value', 'ITC_Claimed', 'Refund_Claimed'].map((field) => (
+                <div key={field}>
+                  <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.4rem', color: theme.text }}>
+                    {field.replace('_', ' ')} {field !== 'GSTIN' && '(₹)'}
+                  </label>
+                  <input 
+                    type={field === 'GSTIN' ? "text" : "number"}
+                    name={field} 
+                    value={invoiceData[field]} 
+                    onChange={handleInputChange} 
+                    required={field !== 'Refund_Claimed'}
+                    maxLength={field === 'GSTIN' ? "15" : undefined}
+                    style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: `1px solid ${theme.inputBorder}`, backgroundColor: theme.inputBg, color: theme.text, fontSize: '1rem', transition: 'all 0.2s', boxSizing: 'border-box' }}
+                  />
                 </div>
+              ))}
+              <button 
+                type="submit" disabled={loading}
+                style={{ 
+                  backgroundColor: loading ? '#94a3b8' : '#2563eb', color: 'white', padding: '1rem', border: 'none', 
+                  borderRadius: '6px', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '1.1rem', 
+                  marginTop: '0.5rem', transition: 'all 0.2s ease' 
+                }}
+              >
+                {loading ? 'Executing ML Pipeline...' : 'Run Risk Engine'}
+              </button>
+            </form>
+            {error && <p className="animate-in" style={{ color: '#ef4444', marginTop: '1rem', fontWeight: '500', padding: '0.75rem', backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.1)' : '#fee2e2', borderRadius: '6px', border: '1px solid #fca5a5' }}>{error}</p>}
+          </div>
 
-                <div style={{ textAlign: 'right' }}>
-                   <h4 style={{ margin: '0 0 5px 0', color: '#64748b', fontSize: '0.9rem', textTransform: 'uppercase' }}>Triggered Action</h4>
-                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '1.2rem', fontWeight: 'bold', color: result.Business_Risk > 60 ? '#ef4444' : '#22c55e' }}>
-                    {result.Business_Risk > 60 ? <AlertTriangle size={24} /> : <CheckCircle size={24} />}
-                    {result.Action_Triggered}
-                  </div>
-                </div>
+          {/* RIGHT COLUMN: RESULTS DASHBOARD */}
+          <div className="animate-in" style={{ animationDelay: '0.4s', padding: '1.5rem', border: `1px solid ${theme.border}`, borderRadius: '12px', backgroundColor: theme.bg, boxShadow: theme.shadow, transition: 'all 0.3s ease' }}>
+            <h2 style={{ marginTop: 0, borderBottom: `2px solid ${theme.border}`, paddingBottom: '0.5rem' }}>Evaluation Output</h2>
+            
+            {!result ? (
+              <div className="animate-in" style={{ color: theme.subText, textAlign: 'center', marginTop: '6rem' }}>
+                <Search size={64} style={{ margin: '0 auto', opacity: 0.3 }} />
+                <p style={{ fontSize: '1.2rem', marginTop: '1rem' }}>Awaiting invoice submission...</p>
               </div>
-
-              {/* Middle Row: Charts */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', height: '220px', marginBottom: '1.5rem' }}>
+            ) : (
+              <div className="animate-in" key={result.Business_Risk}> 
                 
-                {/* Pie Chart */}
-                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem' }}>
-                  <h4 style={{ margin: '0 0 5px 5px', fontSize: '0.85rem', color: '#64748b' }}>Anomaly Breakdown</h4>
-                  <ResponsiveContainer width="100%" height="85%">
-                    <PieChart>
-                      <Pie data={getPieData(result.Business_Risk)} innerRadius={40} outerRadius={60} paddingAngle={2} dataKey="value">
-                        {getPieData(result.Business_Risk).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                {/* Top Row: Score & Action */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', backgroundColor: theme.cardBg, padding: '1.2rem', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <h3 style={{ margin: '0 0 5px 0', color: theme.subText, fontSize: '0.9rem', textTransform: 'uppercase' }}>Business Risk</h3>
+                    <div style={{ fontSize: '3.5rem', fontWeight: '900', color: getRiskColor(result.Business_Risk), lineHeight: '1' }}>
+                      {result.Business_Risk}
+                      <span style={{ fontSize: '1.2rem', color: theme.subText }}>/100</span>
+                    </div>
+                    <div style={{ display: 'inline-block', padding: '0.3rem 0.8rem', borderRadius: '999px', backgroundColor: `${getRiskColor(result.Business_Risk)}20`, color: getRiskColor(result.Business_Risk), fontWeight: 'bold', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                      {result.Category.toUpperCase()}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                     <h4 style={{ margin: '0 0 5px 0', color: theme.subText, fontSize: '0.9rem', textTransform: 'uppercase' }}>Triggered Action</h4>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '1.2rem', fontWeight: 'bold', color: result.Business_Risk > 60 ? '#ef4444' : '#22c55e' }}>
+                      {result.Business_Risk > 60 ? <AlertTriangle size={24} /> : <CheckCircle size={24} />}
+                      {result.Action_Triggered}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Trend Line Graph */}
-                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.5rem' }}>
-                  <h4 style={{ margin: '0 0 5px 5px', fontSize: '0.85rem', color: '#64748b' }}>6-Month Entity Risk Trend</h4>
-                  <ResponsiveContainer width="100%" height="85%">
-                    <LineChart data={getTrendData(result.Business_Risk)}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                      <XAxis dataKey="month" tick={{fontSize: 10}} tickLine={false} axisLine={false} />
-                      <YAxis domain={[0, 100]} hide={true} />
-                      <RechartsTooltip />
-                      <Line type="monotone" dataKey="risk" stroke={getRiskColor(result.Business_Risk)} strokeWidth={3} dot={{ r: 4 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Bottom Row: Key Risk Factors */}
-              <div style={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: '8px' }}>
-                <h4 style={{ margin: '0 0 10px 0', color: '#0f172a' }}>Detected Risk Factors</h4>
-                <ul style={{ paddingLeft: '20px', color: '#334155', margin: 0, fontWeight: '500' }}>
-                  {result.Top_Risk_Drivers.map((driver, index) => (
-                    <li key={index} style={{ marginBottom: '4px' }}>{driver}</li>
-                  ))}
-                </ul>
-              </div>
-
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default App;
+                {/* Middle Row: Charts */}
+                <div className="charts-grid">
+                  {/* Pie Chart */}
+                  <div className="chart-box" style={{ border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '0.75rem', backgroundColor: theme.cardBg }}>
+                    <h4 style={{ margin: '0 0 5px 5px', fontSize: '0.85rem', color: theme.subText }}>Anomaly Breakdown</h4>
+                    <ResponsiveContainer width="100%" height="85%">
+                      <PieChart>
+                        <Pie data={getPieData(result.Business_Risk)} innerRadius={40} outerRadius={60} paddingAngle={2} dataKey="value">
+                          {getPieData(result.Business_Risk).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip contentStyle={{ backgroundColor: theme.cardBg, borderColor: theme.border, color: theme.text }} itemStyle={{ color:
