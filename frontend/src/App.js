@@ -94,7 +94,7 @@ function App() {
   return (
     <div style={{ backgroundColor: theme.bg, color: theme.text, minHeight: '100vh', transition: 'background-color 0.3s ease', padding: '2rem 1rem' }}>
       
-    
+      {/* INJECTED CSS FOR RESPONSIVENESS AND ANIMATIONS */}
       <style>
         {`
           .responsive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1200px; margin: 0 auto; }
@@ -232,4 +232,43 @@ function App() {
                             <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                           ))}
                         </Pie>
-                        <RechartsTooltip contentStyle={{ backgroundColor: theme.cardBg, borderColor: theme.border, color: theme.text }} itemStyle={{ color:
+                        <RechartsTooltip contentStyle={{ backgroundColor: theme.cardBg, borderColor: theme.border, color: theme.text }} itemStyle={{ color: theme.text }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Trend Line Graph */}
+                  <div className="chart-box" style={{ border: `1px solid ${theme.border}`, borderRadius: '8px', padding: '0.75rem', backgroundColor: theme.cardBg }}>
+                    <h4 style={{ margin: '0 0 5px 5px', fontSize: '0.85rem', color: theme.subText }}>6-Month Risk Trend</h4>
+                    <ResponsiveContainer width="100%" height="85%">
+                      <LineChart data={getTrendData(result.Business_Risk)}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.chartGrid} />
+                        <XAxis dataKey="month" tick={{fontSize: 10, fill: theme.subText}} tickLine={false} axisLine={false} />
+                        <YAxis domain={[0, 100]} hide={true} />
+                        <RechartsTooltip contentStyle={{ backgroundColor: theme.cardBg, borderColor: theme.border, color: theme.text }} />
+                        <Line type="monotone" dataKey="risk" stroke={getRiskColor(result.Business_Risk)} strokeWidth={3} dot={{ r: 4 }} animationDuration={1000} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Key Risk Factors */}
+                <div style={{ backgroundColor: theme.cardBg, border: `1px solid ${theme.border}`, padding: '1.2rem', borderRadius: '8px', marginTop: '1rem' }}>
+                  <h4 style={{ margin: '0 0 10px 0', color: theme.text }}>Detected Risk Factors</h4>
+                  <ul style={{ paddingLeft: '20px', color: theme.subText, margin: 0, fontWeight: '500', lineHeight: '1.6' }}>
+                    {result.Top_Risk_Drivers.map((driver, index) => (
+                      <li key={index} className="animate-in" style={{ animationDelay: `${0.5 + (index * 0.1)}s` }}>{driver}</li>
+                    ))}
+                  </ul>
+                </div>
+
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
