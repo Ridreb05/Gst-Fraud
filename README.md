@@ -1,4 +1,4 @@
-# 🛡️ GST SENTINEL AI
+# 🛡️ GST SENTINEL AI : GST Fraud Detection Tool
 ### **NextGenHack 2026 | Problem Statement 26**
 
 Fake invoices and tax manipulation are systemic challenges in GST-based systems. This project implements a **Hybrid Risk Engine** designed for small businesses, utilizing unsupervised machine learning (Isolation Forest) and rule-based validation to identify suspicious patterns in real-time.
